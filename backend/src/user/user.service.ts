@@ -144,6 +144,7 @@ export class UserService {
     newUser.email = email;
     try {
       await this.userRepository.save(newUser);
+      await this.redisService.del(`captcha_${email}`);
       return '注册成功';
     } catch (error) {
       this.logger.error(error, UserService);
@@ -284,6 +285,7 @@ export class UserService {
 
     user.password = this.hashPassword(newPassword);
     await this.userRepository.save(user);
+    await this.redisService.del(`update_password_captcha_${email}`);
     return '密码修改成功';
   }
   // 修改密码验证码
@@ -323,6 +325,7 @@ export class UserService {
     if (headPic) user.headPic = headPic;
 
     await this.userRepository.save(user);
+    await this.redisService.del(`update_user_captcha_${updateUserDto.email}`);
     return '修改成功';
   }
 
