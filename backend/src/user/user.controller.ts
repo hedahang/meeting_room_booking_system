@@ -9,12 +9,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { NoRequireLogin, UserInfo } from 'src/custom.decorator';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { NoRequireLogin } from 'src/custom.decorator';
+import { UpdatePasswordDto } from './dto/update-password.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('user')
 export class UserController {
@@ -29,7 +29,6 @@ export class UserController {
   @Get('register-captcha')
   @NoRequireLogin()
   async registerCaptcha(@Query('email') email: string) {
-    console.log(email);
     return this.userService.registerCaptcha(email);
   }
 
@@ -49,5 +48,47 @@ export class UserController {
   @NoRequireLogin()
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
     return this.userService.refreshToken(refreshTokenDto.refreshToken);
+  }
+
+  // 获取
+  @Get('info')
+  async info(@UserInfo('userId') userId: number) {
+    return this.userService.findUserById(userId);
+  }
+
+  // 更新
+  // @Patch('update')
+  // async update(@Body() updateUserDto: UpdateUserDto) {
+  //   return this.userService.updateUser(updateUserDto);
+  // }
+
+  // 更新用户密码
+  @Patch('update-password')
+  async updatePassword(
+    @UserInfo('userId') userId: number,
+    @Body() updatePasswordDto: UpdatePasswordDto,
+  ) {
+    return this.userService.updatePassword(userId, updatePasswordDto);
+  }
+
+  // 修改密码验证码
+  @Get('update-password-captcha')
+  async updatePasswordCaptcha(@Query('email') email: string) {
+    return this.userService.updatePasswordCaptcha(email);
+  }
+
+  // 修改用户信息
+  @Patch('update')
+  async updateInfo(
+    @UserInfo('userId') userId: number,
+    @Body() updateInfoDto: UpdateUserDto,
+  ) {
+    return this.userService.updateInfo(userId, updateInfoDto);
+  }
+
+  // 修改用户信息验证码
+  @Get('update-user-captcha')
+  async updateUserCaptcha(@Query('email') email: string) {
+    return this.userService.updateUserCaptcha(email);
   }
 }
