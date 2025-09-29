@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { NoRequireLogin, UserInfo } from 'src/custom.decorator';
@@ -15,6 +16,7 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { generateParseIntPipe } from 'src/utils';
 
 @Controller('user')
 export class UserController {
@@ -90,5 +92,35 @@ export class UserController {
   @Get('update-user-captcha')
   async updateUserCaptcha(@Query('email') email: string) {
     return this.userService.updateUserCaptcha(email);
+  }
+
+  // 冻结用户权限
+  @Get('freeze')
+  async freeze(@Query('userId') userId: number) {
+    return this.userService.freezeUserById(userId);
+  }
+
+  // 用户列表
+  @Get('list')
+  async list(
+    @Query('pageNo', new DefaultValuePipe(1), generateParseIntPipe('pageNo'))
+    pageNo: number,
+    @Query(
+      'pageSize',
+      new DefaultValuePipe(10),
+      generateParseIntPipe('pageSize'),
+    )
+    pageSize: number,
+    @Query('username') username: string,
+    @Query('nickName') nickName: string,
+    @Query('email') email: string,
+  ) {
+    return this.userService.findUserList(
+      pageNo,
+      pageSize,
+      username,
+      nickName,
+      email,
+    );
   }
 }

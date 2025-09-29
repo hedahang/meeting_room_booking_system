@@ -9,7 +9,7 @@ import {
 import { md5 } from 'src/utils/';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { RedisService } from 'src/redis/redis.service';
 import { EmailService } from 'src/email/email.service';
@@ -339,5 +339,48 @@ export class UserService {
       html: `<p>你的修改用户信息验证码是 ${captcha}</p>`,
     });
     return '发送成功';
+  }
+
+  // 冻结用户权限
+  async freezeUserById(userId: number) {
+    const user = await this.findUserByIdWithAuth(userId);
+    if (!user) {
+      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+    }
+    user.isFrozen = true;
+    await this.userRepository.save(user);
+    return '冻结成功';
+  }
+
+  // 用户列表
+  async findUserList(
+    pageNo: number,
+    pageSize: number,
+    username: string,
+    nickName: string,
+    email: string,
+  ) {
+    const skipCount = (pageNo - 1) * pageSize;
+    const [users, total] = await this.userRepository.findAndCount({
+      select: [
+        'id',
+        'username',
+        'nickName',
+        'email',
+        'phoneNumber',
+        'isFrozen',
+        'headPic',
+        'createTime',
+        'updateTime',
+      ],
+      skip: skipCount,
+      take: pageSize,
+      where: {
+        username: username ? Like(`%${username}%`) : undefined,
+        nickName: nickName ? Like(`%${nickName}%`) : undefined,
+        email: email ? Like(`%${email}%`) : undefined,
+      },
+    });
+    return { users, total };
   }
 }
