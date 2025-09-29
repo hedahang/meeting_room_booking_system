@@ -22,6 +22,7 @@ import { ConfigService } from '@nestjs/config';
 import { UserInfoVo } from './vo/user-info.vo';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserListVo } from './vo/user-list.vo';
 
 @Injectable()
 export class UserService {
@@ -381,6 +382,9 @@ export class UserService {
         email: email ? Like(`%${email}%`) : undefined,
       },
     });
-    return { users, total };
+    const vo = new UserListVo();
+    vo.users = users;
+    vo.totalCount = total;
+    return vo;
   }
 }

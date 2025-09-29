@@ -1,10 +1,16 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateUserDto } from './create-user.dto';
 import { IsNotEmpty, IsEmail } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
+  @ApiPropertyOptional({
+    description: '头像 URL',
+    example: 'https://example.com/avatar.png',
+  })
   headPic: string;
 
+  @ApiPropertyOptional({ description: '昵称', example: '张三' })
   nickName: string;
 
   @IsNotEmpty({

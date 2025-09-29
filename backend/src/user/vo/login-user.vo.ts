@@ -1,30 +1,19 @@
-interface UserInfo {
-  id: number;
+import { ApiProperty } from '@nestjs/swagger';
+import { UserInfoVo } from './user-info.vo';
 
-  username: string;
-
-  nickName: string;
-
-  email: string;
-
-  headPic: string;
-
-  phoneNumber: string;
-
-  isFrozen: boolean;
-
-  isAdmin: boolean;
-
-  createTime: string;
-
-  roles: string[];
-
-  permissions: string[];
-}
 export class LoginUserVo {
-  userInfo: UserInfo;
+  @ApiProperty({ description: '用户信息', type: UserInfoVo })
+  userInfo: UserInfoVo;
 
+  @ApiProperty({
+    description: '访问令牌',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
   accessToken: string;
 
+  @ApiProperty({
+    description: '刷新令牌',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
   refreshToken: string;
 }
