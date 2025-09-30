@@ -67,3 +67,19 @@ export interface UserInfoResponse {
 export async function getUserInfo() {
   return request.get<UserInfoResponse>('/user/info') as unknown as Promise<UserInfoResponse>
 }
+
+// 更新用户信息
+export interface UpdateUserInfoPayload {
+  headPic?: string
+  nickName?: string
+  email: string
+  captcha: string
+}
+
+export async function requestUpdateUserCaptcha(email: string) {
+  return request.get('/user/update-user-captcha', { params: { email } })
+}
+
+export async function updateUserInfo(payload: UpdateUserInfoPayload) {
+  return request.patch('/user/update', payload)
+}

@@ -2,7 +2,7 @@
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
-import { getUserInfo } from '@/api/user'
+import { getUserInfo, requestUpdateUserCaptcha, updateUserInfo } from '@/api/user'
 
 defineOptions({ name: 'ProfileEditView' })
 
@@ -35,8 +35,12 @@ const onGetCaptcha = async () => {
     ElMessage.warning('请先填写邮箱')
     return
   }
-  // TODO: 调接口发送验证码
-  ElMessage.success('验证码已发送到邮箱（示例）')
+  try {
+    await requestUpdateUserCaptcha(form.email)
+    ElMessage.success('验证码已发送到邮箱')
+  } catch (error: any) {
+    ElMessage.error(error?.message || '验证码发送失败')
+  }
 }
 
 const onLoadProfile = async () => {
@@ -53,9 +57,18 @@ const onLoadProfile = async () => {
 const onSubmit = async () => {
   await formRef.value?.validate(async (valid: boolean) => {
     if (!valid) return
-    // TODO: 提交更新接口
-    ElMessage.success('保存成功（示例）')
-    router.push('/home')
+    try {
+      await updateUserInfo({
+        headPic: form.headPic,
+        nickName: form.nickName,
+        email: form.email,
+        captcha: form.captcha,
+      })
+      ElMessage.success('保存成功')
+      router.push('/home')
+    } catch (error: any) {
+      ElMessage.error(error?.message || '保存失败')
+    }
   })
 }
 
