@@ -22,6 +22,7 @@ import { ConfigService } from '@nestjs/config';
 import { UserInfoVo } from './vo/user-info.vo';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { UserListVo } from './vo/user-list.vo';
 
 @Injectable()
@@ -153,7 +154,7 @@ export class UserService {
   }
   // 注册验证码
   async registerCaptcha(email: string) {
-    const captcha = Math.random().toString(36).substring(2, 8);
+    const captcha = Math.floor(100000 + Math.random() * 900000).toString();
     await this.redisService.set(`captcha_${email}`, captcha, 60 * 5);
     await this.emailService.sendMail({
       to: email,
@@ -262,24 +263,11 @@ export class UserService {
 
   // 更新用户密码
   async updatePassword(userId: number, updatePasswordDto: UpdatePasswordDto) {
-    const { oldPassword, newPassword, email, captcha } = updatePasswordDto;
-    const res_captcha = await this.redisService.get(
-      `update_password_captcha_${email}`,
-    );
-    if (!res_captcha) {
-      throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
-    }
-
-    if (res_captcha !== captcha) {
-      throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
-    }
+    const { oldPassword, newPassword } = updatePasswordDto;
 
     const user = await this.findUserByIdWithAuth(userId);
     if (!user) {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
-    }
-    if (user.email !== email) {
-      throw new HttpException('邮箱不正确', HttpStatus.BAD_REQUEST);
     }
 
     if (!this.isPasswordValid(oldPassword, user.password)) {
@@ -288,53 +276,73 @@ export class UserService {
 
     user.password = this.hashPassword(newPassword);
     await this.userRepository.save(user);
-    await this.redisService.del(`update_password_captcha_${email}`);
     return '密码修改成功';
   }
-  // 修改密码验证码
-  async updatePasswordCaptcha(email: string) {
-    const captcha = Math.random().toString(36).substring(2, 8);
+  // 忘记密码验证码
+  async forgotPasswordCaptcha(email: string) {
+    const captcha = Math.floor(100000 + Math.random() * 900000).toString();
     await this.redisService.set(
-      `update_password_captcha_${email}`,
+      `forgot_password_captcha_${email}`,
       captcha,
       60 * 5,
     );
     await this.emailService.sendMail({
       to: email,
-      subject: '修改密码验证码',
-      html: `<p>你的修改密码验证码是 ${captcha}</p>`,
+      subject: '忘记密码验证码',
+      html: `<p>你的忘记密码验证码是 ${captcha}</p>`,
     });
     return '发送成功';
   }
-  // 修改用户信息
-  async updateInfo(userId: number, updateUserDto: UpdateUserDto) {
-    const { nickName, email, captcha, headPic } = updateUserDto;
-    const res_captcha = await this.redisService.get(
-      `update_user_captcha_${updateUserDto.email}`,
-    );
 
+  // 忘记密码
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const { username, oldPassword, newPassword, email, captcha } =
+      forgotPasswordDto;
+    const res_captcha = await this.redisService.get(
+      `forgot_password_captcha_${email}`,
+    );
     if (!res_captcha) {
       throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
     }
 
-    if (updateUserDto.captcha !== res_captcha) {
+    if (res_captcha !== captcha) {
       throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
     }
+    const user = await this.findUserByUsernameWithAuth(username);
+    if (!user) {
+      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+    }
+
+    if (!this.isPasswordValid(oldPassword, user.password)) {
+      throw new HttpException('旧密码不正确', HttpStatus.BAD_REQUEST);
+    }
+    if (user.email !== email) {
+      throw new HttpException('邮箱不正确', HttpStatus.BAD_REQUEST);
+    }
+    user.password = this.hashPassword(newPassword);
+    await this.userRepository.save(user);
+    await this.redisService.del(`forgot_password_captcha_${email}`);
+    return '密码修改成功';
+  }
+  // 修改用户信息
+  async updateInfo(userId: number, updateUserDto: UpdateUserDto) {
+    const { nickName, headPic, phoneNumber } = updateUserDto;
+
     const user = await this.findUserByIdWithAuth(userId);
     if (!user) {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
     if (nickName) user.nickName = nickName;
     if (headPic) user.headPic = headPic;
-
+    if (phoneNumber) user.phoneNumber = phoneNumber;
+    console.log(user);
     await this.userRepository.save(user);
-    await this.redisService.del(`update_user_captcha_${updateUserDto.email}`);
     return '修改成功';
   }
 
   // 修改用户信息验证码
   async updateUserCaptcha(email: string) {
-    const captcha = Math.random().toString(36).substring(2, 8);
+    const captcha = Math.floor(100000 + Math.random() * 900000).toString();
     await this.redisService.set(
       `update_user_captcha_${email}`,
       captcha,

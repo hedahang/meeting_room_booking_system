@@ -13,19 +13,22 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @ApiPropertyOptional({ description: '昵称', example: '张三' })
   nickName: string;
 
-  @IsNotEmpty({
-    message: '邮箱不能为空',
-  })
-  @IsEmail(
-    {},
-    {
-      message: '不是合法的邮箱格式',
-    },
-  )
-  email: string;
+  @ApiPropertyOptional({ description: '手机号', example: '13800138000' })
+  phoneNumber: string;
 
-  @IsNotEmpty({
-    message: '验证码不能为空',
-  })
-  captcha: string;
+  // @IsNotEmpty({
+  //   message: '邮箱不能为空',
+  // })
+  // @IsEmail(
+  //   {},
+  //   {
+  //     message: '不是合法的邮箱格式',
+  //   },
+  // )
+  // email: string;
+
+  // @IsNotEmpty({
+  //   message: '验证码不能为空',
+  // })
+  // captcha: string;
 }

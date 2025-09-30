@@ -2,7 +2,7 @@
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
-import { getUserInfo, requestUpdateUserCaptcha, updateUserInfo } from '@/api/user'
+import { getUserInfo, updateUserInfo, updatePassword } from '@/api/user'
 import { computed } from 'vue'
 
 defineOptions({ name: 'ProfileEditView' })
@@ -10,68 +10,63 @@ defineOptions({ name: 'ProfileEditView' })
 interface ProfileFormState {
   headPic: string
   nickName: string
-  email: string
-  captcha: string
+  phoneNumber: string
+}
+interface PasswordFormState {
+  oldPassword: string
+  newPassword: string
+  confirmPassword: string
 }
 
 const router = useRouter()
 const formRef = ref()
+const passwordFormRef = ref()
 const form = reactive<ProfileFormState>({
   headPic: '',
   nickName: '',
-  email: '',
-  captcha: '',
+  phoneNumber: '',
+})
+const passwordForm = reactive<PasswordFormState>({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: '',
 })
 
-// 交互状态
-const sendingCaptcha = ref(false)
-const captchaCountdown = ref(0)
 const submitting = ref(false)
-
-function startCaptchaCountdown(seconds = 60) {
-  captchaCountdown.value = seconds
-  const timer = setInterval(() => {
-    if (captchaCountdown.value <= 1) {
-      captchaCountdown.value = 0
-      clearInterval(timer)
-      return
-    }
-    captchaCountdown.value -= 1
-  }, 1000)
-}
+const submittingPwd = ref(false)
+const activeTab = ref('info')
 
 const rules = {
-  email: [
-    { required: true, message: '邮箱不能为空', trigger: 'blur' },
-    { type: 'email', message: '不是合法的邮箱格式', trigger: ['blur', 'change'] },
-  ],
-  captcha: [{ required: true, message: '验证码不能为空', trigger: 'blur' }],
+  nickName: [{ required: true, message: '昵称不能为空', trigger: 'blur' }],
 }
-
-const onGetCaptcha = async () => {
-  if (!form.email) {
-    ElMessage.warning('请先填写邮箱')
-    return
-  }
-  if (sendingCaptcha.value || captchaCountdown.value > 0) return
-  try {
-    sendingCaptcha.value = true
-    await requestUpdateUserCaptcha(form.email)
-    ElMessage.success('验证码已发送到邮箱')
-    startCaptchaCountdown(60)
-  } catch (error: any) {
-    ElMessage.error(error?.message || '验证码发送失败')
-  } finally {
-    sendingCaptcha.value = false
-  }
+const passwordRules = {
+  oldPassword: [
+    { required: true, message: '旧密码不能为空', trigger: 'blur' },
+    { min: 6, message: '密码不能少于 6 位', trigger: 'blur' },
+  ],
+  newPassword: [
+    { required: true, message: '新密码不能为空', trigger: 'blur' },
+    { min: 6, message: '密码不能少于 6 位', trigger: 'blur' },
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认密码', trigger: 'blur' },
+    {
+      validator: (_: any, val: string, cb: any) => {
+        if (!val) return cb(new Error('请确认密码'))
+        if (val !== passwordForm.newPassword) return cb(new Error('两次输入的密码不一致'))
+        cb()
+      },
+      trigger: 'blur',
+    },
+  ],
 }
 
 const onLoadProfile = async () => {
   try {
     const data = await getUserInfo()
     form.nickName = data.nickName || ''
-    form.email = data.email || ''
     form.headPic = data.headPic || ''
+    form.phoneNumber = (data as any).phoneNumber || ''
   } catch (error: any) {
     ElMessage.error(error?.message || '获取用户信息失败')
   }
@@ -124,15 +119,35 @@ const onSubmit = async () => {
       await updateUserInfo({
         headPic: form.headPic,
         nickName: form.nickName,
-        email: form.email,
-        captcha: form.captcha,
+        phoneNumber: form.phoneNumber,
       })
       ElMessage.success('保存成功')
-      router.push('/home')
     } catch (error: any) {
       ElMessage.error(error?.message || '保存失败')
     } finally {
       submitting.value = false
+    }
+  })
+}
+
+const onSubmitPassword = async () => {
+  await passwordFormRef.value?.validate(async (valid: boolean) => {
+    if (!valid) return
+    try {
+      submittingPwd.value = true
+      await updatePassword({
+        oldPassword: passwordForm.oldPassword,
+        newPassword: passwordForm.newPassword,
+      })
+      ElMessage.success('密码修改成功')
+      // 可根据需要清空密码表单
+      passwordForm.oldPassword = ''
+      passwordForm.newPassword = ''
+      passwordForm.confirmPassword = ''
+    } catch (error: any) {
+      ElMessage.error(error?.message || '密码修改失败')
+    } finally {
+      submittingPwd.value = false
     }
   })
 }
@@ -145,53 +160,83 @@ onMounted(onLoadProfile)
     <el-card class="card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <div class="title">个人信息</div>
-          <div class="subtitle">编辑您的资料</div>
+          <div class="title">个人中心</div>
+          <div class="subtitle">编辑资料与修改密码</div>
         </div>
       </template>
 
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
-        <el-form-item label="头像" prop="headPic">
-          <el-upload
-            :action="uploadAction"
-            :headers="uploadHeaders"
-            :show-file-list="false"
-            :before-upload="beforeUpload"
-            :on-success="onUploadSuccess"
-            :on-error="onUploadError"
+      <el-tabs v-model="activeTab">
+        <el-tab-pane label="资料信息" name="info">
+          <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
+            <el-form-item label="头像" prop="headPic">
+              <el-upload
+                :action="uploadAction"
+                :headers="uploadHeaders"
+                :show-file-list="false"
+                :before-upload="beforeUpload"
+                :on-success="onUploadSuccess"
+                :on-error="onUploadError"
+              >
+                <div class="avatar-uploader">
+                  <img v-if="form.headPic" :src="form.headPic" alt="avatar" class="avatar" />
+                  <div v-else class="avatar-placeholder">上传头像</div>
+                </div>
+              </el-upload>
+            </el-form-item>
+            <el-form-item label="昵称" prop="nickName">
+              <el-input v-model="form.nickName" placeholder="请输入昵称" clearable />
+            </el-form-item>
+            <el-form-item label="手机号" prop="phoneNumber">
+              <el-input v-model="form.phoneNumber" placeholder="请输入手机号" clearable />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" class="submit-btn" :loading="submitting" @click="onSubmit"
+                >保存</el-button
+              >
+              <el-button :disabled="submitting" @click="router.back()">取消</el-button>
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+
+        <el-tab-pane label="修改密码" name="password">
+          <el-form
+            ref="passwordFormRef"
+            :model="passwordForm"
+            :rules="passwordRules"
+            label-width="90px"
           >
-            <div class="avatar-uploader">
-              <img v-if="form.headPic" :src="form.headPic" alt="avatar" class="avatar" />
-              <div v-else class="avatar-placeholder">上传头像</div>
-            </div>
-          </el-upload>
-        </el-form-item>
-        <el-form-item label="昵称" prop="nickName">
-          <el-input v-model="form.nickName" placeholder="请输入昵称" clearable />
-        </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="form.email" placeholder="请输入邮箱" clearable />
-        </el-form-item>
-        <el-form-item label="验证码" prop="captcha">
-          <div class="captcha-row">
-            <el-input v-model="form.captcha" placeholder="请输入验证码" />
-            <el-button
-              type="primary"
-              :loading="sendingCaptcha"
-              :disabled="captchaCountdown > 0"
-              @click="onGetCaptcha"
-            >
-              {{ captchaCountdown > 0 ? `${captchaCountdown}s 后重发` : '获取验证码' }}
-            </el-button>
-          </div>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" class="submit-btn" :loading="submitting" @click="onSubmit"
-            >保存</el-button
-          >
-          <el-button :disabled="submitting" @click="router.back()">取消</el-button>
-        </el-form-item>
-      </el-form>
+            <el-form-item label="旧密码" prop="oldPassword">
+              <el-input
+                v-model="passwordForm.oldPassword"
+                type="password"
+                show-password
+                placeholder="请输入旧密码"
+              />
+            </el-form-item>
+            <el-form-item label="新密码" prop="newPassword">
+              <el-input
+                v-model="passwordForm.newPassword"
+                type="password"
+                show-password
+                placeholder="请输入新密码"
+              />
+            </el-form-item>
+            <el-form-item label="确认密码" prop="confirmPassword">
+              <el-input
+                v-model="passwordForm.confirmPassword"
+                type="password"
+                show-password
+                placeholder="请再次输入密码"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" :loading="submittingPwd" @click="onSubmitPassword"
+                >修改密码</el-button
+              >
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+      </el-tabs>
     </el-card>
   </div>
 </template>

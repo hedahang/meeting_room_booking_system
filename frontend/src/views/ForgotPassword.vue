@@ -2,13 +2,14 @@
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
-import { requestUpdatePasswordCaptcha, updatePassword } from '@/api/user'
+import { requestForgotPasswordCaptcha, forgotPassword } from '@/api/user'
 
 defineOptions({ name: 'ForgotPasswordView' })
 
 const router = useRouter()
 
 interface FormState {
+  username: string
   email: string
   captcha: string
   oldPassword: string
@@ -18,6 +19,7 @@ interface FormState {
 
 const formRef = ref()
 const form = reactive<FormState>({
+  username: '',
   email: '',
   captcha: '',
   oldPassword: '',
@@ -26,6 +28,7 @@ const form = reactive<FormState>({
 })
 
 const rules = {
+  username: [{ required: true, message: '用户名不能为空', trigger: 'blur' }],
   email: [
     { required: true, message: '邮箱不能为空', trigger: 'blur' },
     { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'change'] },
@@ -58,7 +61,7 @@ const onGetCaptcha = async () => {
     return
   }
   try {
-    await requestUpdatePasswordCaptcha(form.email)
+    await requestForgotPasswordCaptcha(form.email)
     ElMessage.success('验证码已发送到邮箱')
   } catch (err: any) {
     ElMessage.error(err?.message || '发送验证码失败')
@@ -69,7 +72,8 @@ const onSubmit = async () => {
   await formRef.value?.validate(async (valid: boolean) => {
     if (!valid) return
     try {
-      await updatePassword({
+      await forgotPassword({
+        username: form.username,
         oldPassword: form.oldPassword,
         newPassword: form.newPassword,
         email: form.email,
@@ -94,6 +98,9 @@ const onSubmit = async () => {
         </div>
       </template>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="form.username" placeholder="请输入用户名" clearable />
+        </el-form-item>
         <el-form-item label="邮箱" prop="email">
           <el-input v-model="form.email" placeholder="请输入邮箱" clearable />
         </el-form-item>

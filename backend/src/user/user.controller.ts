@@ -20,6 +20,7 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { generateParseIntPipe } from 'src/utils';
 import {
   ApiTags,
@@ -128,7 +129,7 @@ export class UserController {
     return this.userService.refreshToken(refreshTokenDto.refreshToken);
   }
 
-  // 获取
+  // 获取用户信息
   @ApiBearerAuth()
   @Get('info')
   @ApiResponse({
@@ -156,7 +157,7 @@ export class UserController {
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: '验证码已失效/验证码不正确/用户不存在/旧密码不正确',
+    description: '旧密码不正确',
     type: String,
   })
   @ApiResponse({
@@ -170,9 +171,31 @@ export class UserController {
   ) {
     return this.userService.updatePassword(userId, updatePasswordDto);
   }
+  // 忘记密码
+  @Patch('forgot-password')
+  @ApiBody({
+    type: ForgotPasswordDto,
+    description: '忘记密码',
+    required: true,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: '验证码已失效/验证码不正确/用户不存在/旧密码不正确',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '密码修改成功',
+    type: String,
+  })
+  @NoRequireLogin()
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.userService.forgotPassword(forgotPasswordDto);
+    // return 'done';
+  }
 
-  // 修改密码验证码
-  @Get('update-password-captcha')
+  // 忘记密码验证码
+  @Get('forgot-password-captcha')
   @ApiQuery({
     name: 'email',
     type: String,
@@ -182,11 +205,12 @@ export class UserController {
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: '获取修改密码验证码',
+    description: '获取忘记密码验证码',
     type: String,
   })
-  async updatePasswordCaptcha(@Query('email') email: string) {
-    return this.userService.updatePasswordCaptcha(email);
+  @NoRequireLogin()
+  async forgotPasswordCaptcha(@Query('email') email: string) {
+    return this.userService.forgotPasswordCaptcha(email);
   }
 
   // 修改用户信息
@@ -199,7 +223,7 @@ export class UserController {
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: '验证码已失效/验证码不正确/用户不存在',
+    description: '用户不存在',
     type: String,
   })
   @ApiResponse({

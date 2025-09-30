@@ -37,16 +37,29 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
 export interface UpdatePasswordPayload {
   oldPassword: string
   newPassword: string
-  email: string
-  captcha: string
-}
-
-export async function requestUpdatePasswordCaptcha(email: string) {
-  return request.get('/user/update-password-captcha', { params: { email } })
+  email?: string
+  captcha?: string
 }
 
 export async function updatePassword(payload: UpdatePasswordPayload) {
   return request.patch('/user/update-password', payload)
+}
+
+// 忘记密码
+export interface ForgotPasswordPayload {
+  username: string
+  oldPassword: string
+  newPassword: string
+  email: string
+  captcha: string
+}
+
+export async function requestForgotPasswordCaptcha(email: string) {
+  return request.get('/user/forgot-password-captcha', { params: { email } })
+}
+
+export async function forgotPassword(payload: ForgotPasswordPayload) {
+  return request.patch('/user/forgot-password', payload)
 }
 
 // 用户信息
@@ -72,8 +85,7 @@ export async function getUserInfo() {
 export interface UpdateUserInfoPayload {
   headPic?: string
   nickName?: string
-  email: string
-  captcha: string
+  phoneNumber?: string
 }
 
 export async function requestUpdateUserCaptcha(email: string) {
