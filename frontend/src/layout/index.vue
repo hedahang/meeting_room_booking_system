@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
@@ -7,7 +7,15 @@ const router = useRouter()
 const key = computed(() => route.path)
 
 const systemName = '会议室预定系统'
-const avatarUrl = ''
+const userInfo = ref<any>(null)
+const avatarUrl = computed(() => (userInfo.value?.headPic ? userInfo.value.headPic : ''))
+
+onMounted(() => {
+  try {
+    const raw = localStorage.getItem('user_info')
+    if (raw) userInfo.value = JSON.parse(raw)
+  } catch {}
+})
 
 function goProfile() {
   router.push('/home/profile')

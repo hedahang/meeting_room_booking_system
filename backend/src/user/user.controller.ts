@@ -9,7 +9,10 @@ import {
   Query,
   DefaultValuePipe,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
 import { NoRequireLogin, UserInfo } from 'src/custom.decorator';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -309,5 +312,17 @@ export class UserController {
       nickName,
       email,
     );
+  }
+  // 图片上传
+  @ApiBearerAuth()
+  @Post('upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      dest: 'uploads',
+    }),
+  )
+  async uploadImage(@UploadedFile() file: Express.Multer.File) {
+    // return this.userService.uploadImage(uploadImageDto);
+    return 'http://localhost:3000/' + file.path;
   }
 }

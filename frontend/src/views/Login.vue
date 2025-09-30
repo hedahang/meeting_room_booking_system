@@ -15,8 +15,8 @@ interface LoginFormState {
 
 const formRef = ref()
 const form = reactive<LoginFormState>({
-  username: 'zhangsan',
-  password: '111111',
+  username: '',
+  password: '',
 })
 
 const rules = {

@@ -1,4 +1,6 @@
 import axios from 'axios'
+import router from '@/router'
+import { ElMessageBox } from 'element-plus'
 import type {
   AxiosError,
   AxiosInstance,
@@ -70,10 +72,27 @@ request.interceptors.response.use(
     const serverMessage = data?.message
     const message = serverMessage || error.message || '网络错误'
 
-    // 可在此处理 401/403 等，如清理 token 或跳转登录
+    // 401 未授权：提示是否跳转登录
     if (status === 401) {
-      // localStorage.removeItem('token')
-      // 可根据需要跳转登录页
+      if (!isShowingUnauthorizedConfirm) {
+        isShowingUnauthorizedConfirm = true
+        ElMessageBox.confirm('登录已过期，是否前往登录页面？', '提示', {
+          confirmButtonText: '去登录',
+          cancelButtonText: '取消',
+          type: 'warning',
+        })
+          .then(() => {
+            try {
+              localStorage.removeItem('token')
+              localStorage.removeItem('refreshToken')
+              localStorage.removeItem('user_info')
+            } catch {}
+            router.push('/login')
+          })
+          .finally(() => {
+            isShowingUnauthorizedConfirm = false
+          })
+      }
     }
 
     return Promise.reject({ status, message, raw: error })
@@ -81,3 +100,6 @@ request.interceptors.response.use(
 )
 
 export default request
+
+// 避免重复出现 401 弹窗
+let isShowingUnauthorizedConfirm = false
