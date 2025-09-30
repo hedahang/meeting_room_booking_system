@@ -22,6 +22,11 @@ const router = createRouter({
           name: 'ProfileEdit',
           component: () => import('@/views/ProfileEdit.vue'),
         },
+        {
+          path: 'users',
+          name: 'UserList',
+          component: () => import('@/views/UserList.vue'),
+        },
       ],
     },
     {

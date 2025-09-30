@@ -41,6 +41,10 @@ function logout() {
           <el-icon><Calendar /></el-icon>
           <span>预定历史</span>
         </el-menu-item>
+        <el-menu-item index="/home/users">
+          <el-icon><User /></el-icon>
+          <span>用户列表</span>
+        </el-menu-item>
       </el-menu>
     </div>
     <div class="main-container">

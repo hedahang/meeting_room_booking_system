@@ -88,10 +88,40 @@ export interface UpdateUserInfoPayload {
   phoneNumber?: string
 }
 
-export async function requestUpdateUserCaptcha(email: string) {
-  return request.get('/user/update-user-captcha', { params: { email } })
-}
-
 export async function updateUserInfo(payload: UpdateUserInfoPayload) {
   return request.patch('/user/update', payload)
+}
+
+// 用户列表与冻结/解冻
+export interface GetUserListParams {
+  pageNo?: number
+  pageSize?: number
+  username?: string
+  nickName?: string
+  email?: string
+}
+export interface UserListItem {
+  id: number
+  username: string
+  nickName: string
+  email: string
+  phoneNumber?: string
+  isFrozen: boolean
+  headPic?: string
+  createTime: string
+  updateTime: string
+}
+export interface UserListResponse {
+  list: UserListItem[]
+  totalCount: number
+}
+
+export async function getUserList(params: GetUserListParams = {}) {
+  return request.get<UserListResponse>('/user/list', {
+    params,
+  }) as unknown as Promise<UserListResponse>
+}
+
+export async function freezeUser(userId: number, isFrozen: boolean) {
+  return request.get('/user/freeze', { params: { userId, isFrozen } })
 }

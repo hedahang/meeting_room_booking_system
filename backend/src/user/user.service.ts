@@ -170,6 +170,12 @@ export class UserService {
     if (!user) {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
+    if (user.isFrozen) {
+      throw new HttpException(
+        '账号已冻结，请联系管理员',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     if (!this.isPasswordValid(password, user.password)) {
       throw new HttpException('密码不正确', HttpStatus.BAD_REQUEST);
     }
@@ -340,31 +346,15 @@ export class UserService {
     return '修改成功';
   }
 
-  // 修改用户信息验证码
-  async updateUserCaptcha(email: string) {
-    const captcha = Math.floor(100000 + Math.random() * 900000).toString();
-    await this.redisService.set(
-      `update_user_captcha_${email}`,
-      captcha,
-      60 * 5,
-    );
-    await this.emailService.sendMail({
-      to: email,
-      subject: '更改用户信息验证码',
-      html: `<p>你的修改用户信息验证码是 ${captcha}</p>`,
-    });
-    return '发送成功';
-  }
-
   // 冻结用户权限
-  async freezeUserById(userId: number) {
+  async freezeUserById(userId: number, isFrozen: boolean) {
     const user = await this.findUserByIdWithAuth(userId);
     if (!user) {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
-    user.isFrozen = true;
+    user.isFrozen = isFrozen;
     await this.userRepository.save(user);
-    return '冻结成功';
+    return isFrozen ? '冻结成功' : '解冻成功';
   }
 
   // 用户列表
@@ -397,7 +387,7 @@ export class UserService {
       },
     });
     const vo = new UserListVo();
-    vo.users = users;
+    vo.list = users;
     vo.totalCount = total;
     return vo;
   }

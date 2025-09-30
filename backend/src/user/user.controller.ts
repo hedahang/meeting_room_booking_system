@@ -238,25 +238,6 @@ export class UserController {
     return this.userService.updateInfo(userId, updateInfoDto);
   }
 
-  // 修改用户信息验证码
-  @Get('update-user-captcha')
-  @ApiBearerAuth()
-  @ApiQuery({
-    name: 'email',
-    type: String,
-    description: '邮箱地址',
-    required: true,
-    example: 'xxx@qq.com',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: '获取更改用户信息验证码',
-    type: String,
-  })
-  async updateUserCaptcha(@Query('email') email: string) {
-    return this.userService.updateUserCaptcha(email);
-  }
-
   // 冻结用户权限
   @Get('freeze')
   @ApiBearerAuth()
@@ -267,13 +248,24 @@ export class UserController {
     required: true,
     example: 1,
   })
+  @ApiQuery({
+    name: 'isFrozen',
+    type: Boolean,
+    required: true,
+    example: true,
+    description: '是否冻结',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '冻结用户权限',
     type: String,
   })
-  async freeze(@Query('userId') userId: number) {
-    return this.userService.freezeUserById(userId);
+  async freeze(
+    @Query('userId') userId: number,
+    @Query('isFrozen') isFrozenRaw: string,
+  ) {
+    const isFrozen = isFrozenRaw === 'true' || isFrozenRaw === '1';
+    return this.userService.freezeUserById(userId, isFrozen);
   }
 
   // 用户列表
