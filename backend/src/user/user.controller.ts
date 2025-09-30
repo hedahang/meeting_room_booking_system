@@ -144,6 +144,7 @@ export class UserController {
   // }
 
   // 更新用户密码
+  @ApiBearerAuth()
   @Patch('update-password')
   @ApiBody({
     type: UpdatePasswordDto,

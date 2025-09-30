@@ -89,7 +89,7 @@ const onForgotPassword = () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .login-page {
   min-height: 100vh;
   display: flex;
@@ -97,36 +97,42 @@ const onForgotPassword = () => {
   justify-content: center;
   background: linear-gradient(135deg, #f0f5ff 0%, #fafafa 100%);
   padding: 24px;
-}
-.card {
-  width: 430px;
-  border-radius: 14px;
-}
-.card-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.title {
-  font-size: 20px;
-  font-weight: 700;
-}
-.subtitle {
-  margin-top: 4px;
-  color: #909399;
-  font-size: 13px;
-}
-.submit-btn {
-  width: 100%;
-}
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: -10px;
-}
-.divider {
-  color: #dcdfe6;
+
+  .card {
+    width: 430px;
+    border-radius: 14px;
+
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .title {
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .subtitle {
+        margin-top: 4px;
+        color: #909399;
+        font-size: 13px;
+      }
+    }
+
+    .submit-btn {
+      width: 100%;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: -10px;
+
+      .divider {
+        color: #dcdfe6;
+      }
+    }
+  }
 }
 </style>

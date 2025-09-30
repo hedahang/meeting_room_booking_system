@@ -143,7 +143,7 @@ const onSubmit = async () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .register-page {
   min-height: 100vh;
   display: flex;
@@ -151,42 +151,49 @@ const onSubmit = async () => {
   justify-content: center;
   background: linear-gradient(135deg, #f0f5ff 0%, #fafafa 100%);
   padding: 24px;
-}
-.card {
-  width: 520px;
-  border-radius: 14px;
-}
-.card-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.title {
-  font-size: 20px;
-  font-weight: 700;
-}
-.subtitle {
-  margin-top: 4px;
-  color: #909399;
-  font-size: 13px;
-}
-.submit-btn {
-  width: 100%;
-}
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: -10px;
-}
-.captcha-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-.captcha-row :deep(.el-input) {
-  flex: 1;
+
+  .card {
+    width: 520px;
+    border-radius: 14px;
+
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .title {
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .subtitle {
+        margin-top: 4px;
+        color: #909399;
+        font-size: 13px;
+      }
+    }
+
+    .submit-btn {
+      width: 100%;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: -10px;
+    }
+
+    .captcha-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+
+      :deep(.el-input) {
+        flex: 1;
+      }
+    }
+  }
 }
 </style>

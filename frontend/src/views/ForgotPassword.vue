@@ -2,6 +2,7 @@
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import { requestUpdatePasswordCaptcha, updatePassword } from '@/api/user'
 
 defineOptions({ name: 'ForgotPasswordView' })
 
@@ -10,6 +11,7 @@ const router = useRouter()
 interface FormState {
   email: string
   captcha: string
+  oldPassword: string
   newPassword: string
   confirmPassword: string
 }
@@ -18,6 +20,7 @@ const formRef = ref()
 const form = reactive<FormState>({
   email: '',
   captcha: '',
+  oldPassword: '',
   newPassword: '',
   confirmPassword: '',
 })
@@ -28,6 +31,10 @@ const rules = {
     { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'change'] },
   ],
   captcha: [{ required: true, message: '验证码不能为空', trigger: 'blur' }],
+  oldPassword: [
+    { required: true, message: '旧密码不能为空', trigger: 'blur' },
+    { min: 6, message: '密码不能少于 6 位', trigger: 'blur' },
+  ],
   newPassword: [
     { required: true, message: '新密码不能为空', trigger: 'blur' },
     { min: 6, message: '密码不能少于 6 位', trigger: 'blur' },
@@ -50,15 +57,29 @@ const onGetCaptcha = async () => {
     ElMessage.warning('请先填写邮箱')
     return
   }
-  ElMessage.success('验证码已发送到邮箱（示例）')
+  try {
+    await requestUpdatePasswordCaptcha(form.email)
+    ElMessage.success('验证码已发送到邮箱')
+  } catch (err: any) {
+    ElMessage.error(err?.message || '发送验证码失败')
+  }
 }
 
 const onSubmit = async () => {
   await formRef.value?.validate(async (valid: boolean) => {
     if (!valid) return
-    // TODO: 调用后端重置密码接口
-    ElMessage.success('密码重置成功')
-    router.push('/login')
+    try {
+      await updatePassword({
+        oldPassword: form.oldPassword,
+        newPassword: form.newPassword,
+        email: form.email,
+        captcha: form.captcha,
+      })
+      ElMessage.success('密码重置成功')
+      router.push('/login')
+    } catch (err: any) {
+      ElMessage.error(err?.message || '密码重置失败')
+    }
   })
 }
 </script>
@@ -81,6 +102,14 @@ const onSubmit = async () => {
             <el-input v-model="form.captcha" placeholder="请输入验证码" />
             <el-button type="primary" @click="onGetCaptcha">获取验证码</el-button>
           </div>
+        </el-form-item>
+        <el-form-item label="旧密码" prop="oldPassword">
+          <el-input
+            v-model="form.oldPassword"
+            type="password"
+            show-password
+            placeholder="请输入旧密码"
+          />
         </el-form-item>
         <el-form-item label="新密码" prop="newPassword">
           <el-input
@@ -109,7 +138,7 @@ const onSubmit = async () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .forgot-page {
   min-height: 100vh;
   display: flex;
@@ -117,40 +146,47 @@ const onSubmit = async () => {
   justify-content: center;
   background: linear-gradient(135deg, #f0f5ff 0%, #fafafa 100%);
   padding: 24px;
-}
-.card {
-  width: 520px;
-  border-radius: 14px;
-}
-.card-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.title {
-  font-size: 20px;
-  font-weight: 700;
-}
-.subtitle {
-  margin-top: 4px;
-  color: #909399;
-  font-size: 13px;
-}
-.submit-btn {
-  width: 100%;
-}
-.captcha-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-.captcha-row :deep(.el-input) {
-  flex: 1;
-}
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
+  .card {
+    width: 520px;
+    border-radius: 14px;
+
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .title {
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .subtitle {
+        margin-top: 4px;
+        color: #909399;
+        font-size: 13px;
+      }
+    }
+
+    .submit-btn {
+      width: 100%;
+    }
+
+    .captcha-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+
+      :deep(.el-input) {
+        flex: 1;
+      }
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
 }
 </style>

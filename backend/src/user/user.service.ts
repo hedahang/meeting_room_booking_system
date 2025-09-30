@@ -278,6 +278,9 @@ export class UserService {
     if (!user) {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
+    if (user.email !== email) {
+      throw new HttpException('邮箱不正确', HttpStatus.BAD_REQUEST);
+    }
 
     if (!this.isPasswordValid(oldPassword, user.password)) {
       throw new HttpException('旧密码不正确', HttpStatus.BAD_REQUEST);

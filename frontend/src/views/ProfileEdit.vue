@@ -2,6 +2,7 @@
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import { getUserInfo } from '@/api/user'
 
 defineOptions({ name: 'ProfileEditView' })
 
@@ -39,15 +40,13 @@ const onGetCaptcha = async () => {
 }
 
 const onLoadProfile = async () => {
-  // TODO: 从接口获取用户信息并填充
-  const userInfo = localStorage.getItem('user_info')
-  if (userInfo) {
-    try {
-      const parsed = JSON.parse(userInfo)
-      form.nickName = parsed.nickName || ''
-      form.email = parsed.email || ''
-      form.headPic = parsed.headPic || ''
-    } catch {}
+  try {
+    const data = await getUserInfo()
+    form.nickName = data.nickName || ''
+    form.email = data.email || ''
+    form.headPic = data.headPic || ''
+  } catch (error: any) {
+    ElMessage.error(error?.message || '获取用户信息失败')
   }
 }
 
@@ -98,43 +97,45 @@ onMounted(onLoadProfile)
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .profile-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f0f5ff 0%, #fafafa 100%);
-  padding: 24px;
-}
-.card {
-  width: 560px;
-  border-radius: 14px;
-}
-.card-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.title {
-  font-size: 20px;
-  font-weight: 700;
-}
-.subtitle {
-  margin-top: 4px;
-  color: #909399;
-  font-size: 13px;
-}
-.submit-btn {
-  min-width: 120px;
-}
-.captcha-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-.captcha-row :deep(.el-input) {
-  flex: 1;
+  /* 适配 layout 内容区：去除全屏与渐变背景，仅保留内边距 */
+  // padding: 16px;
+
+  .card {
+    margin: 0 auto;
+    border-radius: 14px;
+
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .title {
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .subtitle {
+        margin-top: 4px;
+        color: #909399;
+        font-size: 13px;
+      }
+    }
+
+    .submit-btn {
+      min-width: 120px;
+    }
+
+    .captcha-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+
+      :deep(.el-input) {
+        flex: 1;
+      }
+    }
+  }
 }
 </style>
